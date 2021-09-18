@@ -4,35 +4,46 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.liba.assignment.common.defaultCoroutineExceptionHandler
+import io.liba.assignment.superdoMarket.ObserveMarketUseCase
+import io.liba.assignment.superdoMarket.StartObservingMarketUseCase
+import io.liba.assignment.superdoMarket.StopObservingMarketUseCase
+import io.liba.assignment.superdoMarket.models.GroceryFilter
+import io.liba.assignment.superdoMarket.models.GroceryItem
+import io.liba.assignment.superdoMarket.models.WeightGroceryFilter
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
+import javax.inject.Inject
 
 data class HomeState(
-    val counter: Int = 0,
+    val groceries: List<GroceryItem> = emptyList(),
+    val isActive: Boolean = false,
+    val weightFilter: String = "",
     val isInitialized: Boolean,
 )
 
-private val homeViewModelHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
-    Timber.e(throwable)
-}
-
-class HomeViewModel(
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalStdlibApi::class)
+@HiltViewModel
+class HomeViewModel @Inject constructor(
     handle: SavedStateHandle,
+    private val startObservingMarketUseCase: StartObservingMarketUseCase,
+    private val stopObservingMarketUseCase: StopObservingMarketUseCase,
+    observeMarketUseCase: ObserveMarketUseCase,
 ) : ViewModel() {
 
-    private val mutableCounter = handle.getLiveData("counter", 0)
+    private val mutableWeightFilter = handle.getLiveData("weight_filter", "")
 
     val viewState = combine(
-        mutableCounter.asFlow(),
-        flowOf(Unit)
-    ) { counter, _ ->
+        observeMarketUseCase.groceriesFlow,
+        observeMarketUseCase.isObservingMarket,
+        mutableWeightFilter.asFlow()
+    ) { groceries, isActive, weightFilter ->
         HomeState(
-            counter = counter,
+            groceries = groceries,
+            isActive = isActive,
+            weightFilter = weightFilter,
             isInitialized = true
         )
     }.stateIn(
@@ -42,10 +53,29 @@ class HomeViewModel(
     )
 
     init {
-        val a = 5
+        combine(
+            mutableWeightFilter.asFlow(),
+            flowOf(Unit) // Future Filter Stub
+        ) { weightFilter, _ ->
+            buildList<GroceryFilter> {
+                when (weightFilter) {
+                    "" -> Unit // Don't add Filter
+                    else -> add(WeightGroceryFilter(weightFilter.toDouble()))
+                }
+            }
+        }.flatMapLatest { filters -> observeMarketUseCase.observe(filters) }
+            .launchIn(viewModelScope)
     }
 
-    fun addToCounter() = viewModelScope.launch(homeViewModelHandler) {
-        mutableCounter.value = mutableCounter.value?.plus(1)
+    fun start() = viewModelScope.launch(defaultCoroutineExceptionHandler) {
+        startObservingMarketUseCase.start()
+    }
+
+    fun stop() = viewModelScope.launch(defaultCoroutineExceptionHandler) {
+        stopObservingMarketUseCase.stop()
+    }
+
+    fun setWeightFilter(weight: String) = viewModelScope.launch(defaultCoroutineExceptionHandler) {
+        mutableWeightFilter.value = weight
     }
 }

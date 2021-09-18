@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     kotlin("android")
-    id("kotlinx-serialization")
+    kotlin("plugin.serialization")
     id("kotlin-parcelize")
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
@@ -58,6 +58,7 @@ android {
 dependencies {
     // Core
     implementation("androidx.core:core-ktx:1.7.0-beta01")
+    implementation("androidx.recyclerview:recyclerview:1.2.1")
 
     // Kotlin Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
@@ -100,6 +101,12 @@ dependencies {
     implementation("androidx.room:room-runtime:2.4.0-alpha04")
     implementation("androidx.room:room-ktx:2.4.0-alpha04")
     kapt("androidx.room:room-compiler:2.4.0-alpha04")
+
+    // Networking
+    implementation("io.ktor:ktor-client-core:1.6.3")
+    implementation("io.ktor:ktor-client-cio:1.6.3")
+    implementation("io.ktor:ktor-client-logging:1.6.3")
+    implementation("io.ktor:ktor-client-websockets:1.6.3")
 
     // Datastore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
