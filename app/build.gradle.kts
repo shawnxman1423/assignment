@@ -4,6 +4,7 @@ plugins {
     id("kotlinx-serialization")
     id("kotlin-parcelize")
     kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -48,6 +49,9 @@ android {
         resources {
             exclude("/META-INF/{AL2.0,LGPL2.1}")
         }
+    }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
 }
 
