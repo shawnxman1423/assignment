@@ -1,10 +1,12 @@
 object Versions {
     const val kotlin = "1.5.30"
-    const val kotlinCoroutines = "1.5.2"
-    const val kotlinxSerialization = "1.2.2"
+    const val coroutines = "1.5.2"
+    const val serialization = "1.2.2"
 
     const val compose = "1.1.0-alpha04"
-    const val nav_compose = "2.4.0-alpha09"
+    const val accompanist = "0.18.0"
+
+    const val hilt = "2.38.1"
 
     const val timber = "5.0.1"
 }
